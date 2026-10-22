@@ -1,0 +1,42 @@
+
+name: Pipeline de Ping
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  ping-github:
+    name: Testar conectividade com GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Exibir informações da execução
+        run: |
+          echo "Pipeline iniciada!"
+          echo "Repositório: $GITHUB_REPOSITORY"
+          echo "Branch: $GITHUB_REF_NAME"
+          echo "Commit: $GITHUB_SHA"
+
+      - name: Executar ping no GitHub
+        run: |
+          echo "Testando conectividade com github.com..."
+          ping -c 4 -W 5 github.com
+
+      - name: Verificar acesso HTTPS ao GitHub
+        run: |
+          echo "Testando conexão HTTPS..."
+          curl --fail --silent --show-error \
+            --max-time 15 \
+            https://github.com/ \
+            -o /dev/null
+          echo "Conexão HTTPS funcionando!"
+
+      - name: Finalizar pipeline
+        run: echo "Pipeline concluída com sucesso!"
