@@ -1,4 +1,4 @@
-name: Pipeline de Ping
+name: CI - Pipeline de Conectividade
 
 on:
   push:
@@ -6,38 +6,58 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  ping-github:
-    name: Testar conectividade com GitHub
+  connectivity:
+    name: Testes de conectividade
     runs-on: ubuntu-latest
+    timeout-minutes: 2
 
     steps:
-      - name: Baixar o código
-        uses: actions/checkout@v4
+      - name: Checkout do repositório
+        uses: actions/checkout@v6
 
-      - name: Exibir informações
+      - name: Informações da execução
         run: |
-          echo "Pipeline iniciada!"
-          echo "Repositório: $GITHUB_REPOSITORY"
+          echo "================================"
+          echo "PIPELINE DE CI"
+          echo "================================"
+          echo "Repositorio: $GITHUB_REPOSITORY"
           echo "Branch: $GITHUB_REF_NAME"
           echo "Commit: $GITHUB_SHA"
+          echo "Iniciado por: $GITHUB_ACTOR"
 
-      - name: Executar ping no GitHub
+      - name: Validar estrutura do projeto
         run: |
-          echo "Testando ping..."
+          test -d .github/workflows
+          test -f .github/workflows/ping.yml
+          echo "Estrutura do workflow validada!"
+
+      - name: Teste de conectividade ICMP
+        continue-on-error: true
+        run: |
           if ping -c 4 -W 5 github.com; then
-            echo "Ping respondeu com sucesso!"
+            echo "Ping concluido com sucesso."
           else
-            echo "::warning::Ping sem resposta. Pode haver bloqueio de ICMP."
+            echo "::warning::Ping sem resposta; ICMP pode estar bloqueado."
           fi
 
-      - name: Verificar conexão HTTPS
+      - name: Teste HTTP/HTTPS
         run: |
           curl --fail --silent --show-error \
             --max-time 15 \
-            https://github.com/ \
-            -o /dev/null
-          echo "Conexão HTTPS funcionando!"
+            --output /dev/null \
+            --write-out "HTTP status: %{http_code}\n" \
+            https://github.com/
 
-      - name: Finalizar pipeline
-        run: echo "Pipeline concluída com sucesso!"
+      - name: Resumo final
+        if: always()
+        run: |
+          echo "Pipeline finalizada."
+          echo "Consulte os passos acima para verificar os resultados."
