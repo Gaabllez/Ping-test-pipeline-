@@ -1,11 +1,9 @@
-
 name: Pipeline de Ping
 
 on:
   push:
     branches:
       - main
-
   workflow_dispatch:
 
 jobs:
@@ -14,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar o código do repositório
+      - name: Baixar o código
         uses: actions/checkout@v4
 
-      - name: Exibir informações da execução
+      - name: Exibir informações
         run: |
           echo "Pipeline iniciada!"
           echo "Repositório: $GITHUB_REPOSITORY"
@@ -26,12 +24,15 @@ jobs:
 
       - name: Executar ping no GitHub
         run: |
-          echo "Testando conectividade com github.com..."
-          ping -c 4 -W 5 github.com
+          echo "Testando ping..."
+          if ping -c 4 -W 5 github.com; then
+            echo "Ping respondeu com sucesso!"
+          else
+            echo "::warning::Ping sem resposta. Pode haver bloqueio de ICMP."
+          fi
 
-      - name: Verificar acesso HTTPS ao GitHub
+      - name: Verificar conexão HTTPS
         run: |
-          echo "Testando conexão HTTPS..."
           curl --fail --silent --show-error \
             --max-time 15 \
             https://github.com/ \
